@@ -2,6 +2,7 @@ from random import randint
 import numpy as np
 import pygame as pg
 import argparse
+import pathlib 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 #parser.add_argument('integers', metavar='N', type=int, nargs='+',
@@ -101,3 +102,17 @@ while running:
         running=False
         print('game over')
     
+pg.quit()
+if not(os.path.exists(highscore.txt)):
+    with open('highscore.txt','w') as f:
+        Name=input('Nom du joueur:')
+        f.write((Name, score)/n)
+else:
+    with open('highscore.txt','r') as f:
+        for count, line in enumerate(fp):
+            pass
+        if count+1<5:
+            Name=input('Nom du joueur:')
+            print(Name, score)
+        else:
+            with open('highscore.txt','w') as fd:
