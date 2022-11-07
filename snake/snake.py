@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(description='Process some integers.')
 #parser.add_argument('--sum', dest='accumulate', action='store_const',
  #                   const=sum, default=max,
  #                   help='sum the integers (default: find the max)')
-parser.add_argument('--height', type=int, help='height', default=400)
+parser.add_argument('--height', type=int, help='height', default=400) #le joueur definit largeur et longueur de sa fenetre de jeu +pixel
 parser.add_argument('--width', type=int, help='width', default=400)
 parser.add_argument('--heightpixel', type=int, help='heightp', default=20)
 parser.add_argument('--widthpixel', type=int, help='widthp', default=20)
@@ -18,18 +18,34 @@ args = parser.parse_args()
 print(args) #affiche dans le bash les arguments
 
 pg.init()
-screen=pg.display.set_mode((args.width,args.height))
+screen=pg.display.set_mode((args.width,args.height)) #on definit un ecran
 
-clock=pg.time.Clock()
-running=True
+clock=pg.time.Clock() #on definit une horloge
+running=True  #condition pour que la boucle tourne
 
 score=0
-def snake(L):
+def damier(x,y,xp,yp):
+        for i in range(x//xp):
+            for j in range(y//yp):
+                if (i+j)%2 ==0:
+                    rect = pg.Rect(i*y, j*x, xp, yp)
+
+                # appel à la méthode draw.rect()
+                    color = (0, 0, 0) # couleur blanche
+                    pg.draw.rect(screen,color , rect)
+                else:
+                    rect = pg.Rect(i*y, j*x, xp, yp)
+
+                # appel à la méthode draw.rect()
+                    color = (255, 255, 255) # noir
+                    pg.draw.rect(screen,color,rect)
+
+def snake(L):   #code de l'affichage du serpent
     for rectangle in L:  #L liste des tuples de positionnement des rectangles vert
         rectang=pg.Rect(rectangle[0]*args.widthpixel,rectangle[1]*args.heightpixel,args.widthpixel,args.heightpixel)
         pg.draw.rect(screen,(0,254,0),rectang)
 
-def fruit(a,b):
+def fruit(a,b):   #code de l'affichage du fruit
     rec=pg.Rect(a*args.widthpixel,b*args.heightpixel,args.widthpixel,args.heightpixel)
     pg.draw.rect(screen,(254,0,0),rec)
     
@@ -48,7 +64,7 @@ while running:
     for event in pg.event.get():  #renvoie none si pas event
             if event.type == pg.QUIT:
                 running=False
-        # un type de pg.KEYDOWN signifie que l'on a appuyé une touche du clavier
+        # un type de pg.KEYDOWN signifie que l'on a appuye une touche du clavier
             elif event.type == pg.KEYDOWN:
             # si la touche est "Q" on veut quitter le programme
                 if event.key == pg.K_q:
@@ -66,22 +82,13 @@ while running:
     screen.fill((255,255,255))
     pg.display.update()
 
-    
-    for i in range(args.width//args.widthpixel):
-        for j in range(args.height//args.heightpixel):
-            if (i+j)%2 ==0:
-                rect = pg.Rect(i*args.heightpixel, j*args.widthpixel, args.widthpixel, args.heightpixel)
-
-                # appel à la méthode draw.rect()
-                color = (0, 0, 0) # couleur blanche
-                pg.draw.rect(screen,color , rect)
-    
-    L.append((L[-1][0]+direction[0],L[-1][1]+direction[1]))
+    damier(args.widthpixel,args.heightpixel,args.widthpixel,args.heightpixel)
+    L.append((L[-1][0]+direction[0],L[-1][1]+direction[1])) #on fait avancer le snake en rajoutant un rectangle a sa liste et enlevant le dernier
     fruit(a,b)
-    if L[-1]!=(a,b):
-        del L[0]
+    if L[-1]!=(a,b):  #si la tete ne rencontre pas le fruit
+        del L[0]        #on supprime la derniere case ie le snake ne grandit pas
     else:
-        a=np.random.randint(0,args.height//args.heightpixel)
+        a=np.random.randint(0,args.height//args.heightpixel)    #sinon on genere nouveau fruit
         b=np.random.randint(0,args.height//args.heightpixel)
         score=score+1
     
@@ -92,7 +99,7 @@ while running:
     snake(L)
     pg.display.update()
 
-    if L[-1] in L[:-1]:
+    if L[-1] in L[:-1]:     #si la tete du snake touche son corps on perd
         running=False
         print('game over')
     elif L[-1][0]<0 or L[-1][0]>= (args.width//args.widthpixel):
@@ -106,7 +113,7 @@ pg.quit()
 if not(os.path.exists(highscore.txt)):
     with open('highscore.txt','w') as f:
         Name=input('Nom du joueur:')
-        f.write((Name, score)/n)
+        f.write((Name, score),\n)
 else:
     with open('highscore.txt','r') as f:
         for count, line in enumerate(fp):
