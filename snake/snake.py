@@ -2,7 +2,7 @@ from random import randint
 import numpy as np
 import pygame as pg
 import argparse
-import pathlib 
+import os 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 #parser.add_argument('integers', metavar='N', type=int, nargs='+',
@@ -31,13 +31,13 @@ def damier(x,y,xp,yp):
                     rect = pg.Rect(i*y, j*x, xp, yp)
 
                 # appel à la méthode draw.rect()
-                    color = (0, 0, 0) # couleur blanche
+                    color = [0, 0, 0] # couleur blanche
                     pg.draw.rect(screen,color , rect)
                 else:
                     rect = pg.Rect(i*y, j*x, xp, yp)
 
                 # appel à la méthode draw.rect()
-                    color = (255, 255, 255) # noir
+                    color = [255, 255, 255] # noir
                     pg.draw.rect(screen,color,rect)
 
 def snake(L):   #code de l'affichage du serpent
@@ -56,7 +56,7 @@ L= [(9, 13),
 ]
 direction=(0,1)
 a=np.random.randint(0,args.width//args.widthpixel)
-b=np.random.randint(args.height//args.heightpixel)
+b=np.random.randint(0,args.height//args.heightpixel)
 
 while running:
 
@@ -81,8 +81,8 @@ while running:
    # random_color=(randint(0,255),randint(0,255),randint(0,255))
     screen.fill((255,255,255))
     pg.display.update()
-
     damier(args.widthpixel,args.heightpixel,args.widthpixel,args.heightpixel)
+    pg.display.update()
     L.append((L[-1][0]+direction[0],L[-1][1]+direction[1])) #on fait avancer le snake en rajoutant un rectangle a sa liste et enlevant le dernier
     fruit(a,b)
     if L[-1]!=(a,b):  #si la tete ne rencontre pas le fruit
@@ -110,16 +110,29 @@ while running:
         print('game over')
     
 pg.quit()
-if not(os.path.exists(highscore.txt)):
+
+if not(os.path.exists('highscore.txt')):
     with open('highscore.txt','w') as f:
         Name=input('Nom du joueur:')
-        f.write((Name, score),\n)
+        tup=((score,Name))
+        f.write('\n'.join(f'{score} {Name}'))
 else:
     with open('highscore.txt','r') as f:
-        for count, line in enumerate(fp):
+        for count, line in enumerate(f):
             pass
         if count+1<5:
-            Name=input('Nom du joueur:')
-            print(Name, score)
+            with open('highscore.txt','r') as f:
+                Name=input('Nom du joueur:')
+                tup=((score,Name))
+                f.write('\n'.join(f'{tup[0]} {tup[1]}'))
         else:
-            with open('highscore.txt','w') as fd:
+            lines = f.readlines()
+            L=[]
+            for l in lines:
+                L.append(int(l[0]+l[1]))
+                L.sort()
+                if L[0]<score:
+                    with open('highscore.txt','w') as fd:
+                        Name=input('Nom du joueur:')
+                        tup=((score,Name))
+                        f.write('\n'.join(f'{tup[0]} {tup[1]}'))
