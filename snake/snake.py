@@ -3,6 +3,7 @@ import numpy as np
 import pygame as pg
 import argparse
 import os 
+from os import system
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 #parser.add_argument('integers', metavar='N', type=int, nargs='+',
@@ -54,6 +55,13 @@ def snake(L):   #code de l'affichage du serpent
 def fruit(a,b):   #code de l'affichage du fruit
     rec=pg.Rect(a*args.dimpixel,b*args.dimpixel,args.dimpixel,args.dimpixel)
     pg.draw.rect(screen,(254,0,0),rec)
+
+def scorejoueur(sc,l):  #prend en arguments score et liste
+    Name=input('Nom du joueur:')
+    l.append((sc,Name))
+    print(l)
+    for k in range(len(l)):
+        f.write(f"{l[k][0]}, {l[k][1]}\n")
     
 L= [(9, 13),
     (10, 13),
@@ -116,30 +124,27 @@ while running:
         print('game over')
     
 pg.quit()
-
+l=[]
 if not(os.path.exists('highscore.txt')):
     with open('highscore.txt','w') as f:
-        Name=input('Nom du joueur:')
-        tup=((score,Name))
-        f.write(''.join(f'{score} {Name}'))
+        scorejoueur(score,l)
 else:
     with open('highscore.txt','r') as f:
-        for count, line in enumerate(f):
-            pass
-        if count+1<5:
+        
+        for line in f:
+            if line=='\n':
+                pass
+            else:
+                s,nom=int(line.split(',')[0]), line.split(',')[1]
+                l.append((s,nom))
+        if len(l)<5:
+            
             with open('highscore.txt','w') as f:
-                Name=input('Nom du joueur:')
-                tup=((score,Name))
-                #f.write('\n')
-                f.write(''.join(f'{tup[0]} {tup[1]}'))
+                scorejoueur(score,l)
         else:
-            lines = f.readlines()
-            L=[]
-            for l in lines:
-                L.append(int(l[0]+l[1]))
-                L.sort()
-                if L[0]<score:
-                    with open('highscore.txt','w') as fd:
-                        Name=input('Nom du joueur:')
-                        tup=((score,Name))
-                        f.write('\n'.join(f'{tup[0]} {tup[1]}'))
+            l=sorted(l)
+            if score>l[0][0]:
+                l.pop(0)
+                with open('highscore.txt','w') as f:    
+                    scorejoueur(score,l)
+system("cat highscore.txt")
