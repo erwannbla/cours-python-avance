@@ -59,7 +59,7 @@ def fruit(a,b):   #code de l'affichage du fruit
 def scorejoueur(sc,l):  #prend en arguments score et liste
     Name=input('Nom du joueur:')
     l.append((sc,Name))
-    print(l)
+    l=sorted(l)
     for k in range(len(l)):
         f.write(f"{l[k][0]}, {l[k][1]}\n")
     
