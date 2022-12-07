@@ -111,7 +111,9 @@ class Damier:
         pg.draw.rect(screen,(254,0,0),rec)
 
 
-class Snake:
+class Snake:            #class avec majuscule, fonction avec minuscule
+    #syntaxe java mots separes par majuscule
+    #syntaxe C++ mots separes par _
     def __init__(self, liste_snake=[(9, 13),(10, 13),(11, 13),(12,13)], direction=(1,0)):
         self._liste_snake = liste_snake
         self._direction = direction
@@ -129,28 +131,26 @@ class Snake:
         self._liste_snake.append((self._liste_snake[-1][0]+self._direction[0],self._liste_snake[-1][1]+self._direction[1])) #on fait avancer le snake en rajoutant un rectangle a sa liste et enlevant le dernier
         return self._liste_snake
 
-    def manger_fruit(self):    
-        if self._liste_snake[-1]!=Fruit().getposition():  #si la tete ne rencontre pas le fruit
+    def manger_fruit(self,fru,object,sco):    
+        if self._liste_snake[-1]!=fru.getposition():  #si la tete ne rencontre pas le fruit
             del self._liste_snake[0] 
         else:
-            Fruit()._position=Damier().position_fruit()
-            Score().raise_score()
+            fru._position=object.position_fruit()
+            sco._score+=1
 
-            #on met ensuit fruit.affiche_fruit()?
-
-    def mort_snake(self):   
+    def mort_snake(self,object):   
         if self._liste_snake[-1] in self._liste_snake[:-1]:     #si la tete du snake touche son corps on perd
             
             print('game over')
-            Game()._running= False
+            object._running= False
         elif self._liste_snake[-1][0]<0 or self._liste_snake[-1][0]>= (damier.getwidth()//damier.getpixel()):
             
             print('game over')
-            Game()._running= False
+            object._running= False
         elif self._liste_snake[-1][1]<0 or self._liste_snake[-1][1]>= (damier.getheight()//damier.getpixel()):
             
             print('game over')
-            Game()._running= False
+            object._running= False
 
 class Fruit:
     def __init__(self, position=Damier().position_fruit()): #position est un couple
@@ -166,19 +166,22 @@ class Score:
 
     def GetScore(self):
         return self._score
+    
+    def displayScore(self):
+        pg.display.set_caption(f"Score:{self._score}")
 
-    def raise_score(self):
-        self._score+=1
+   # def raise_score(self):
+   #     self._score=self._score + 1
         
     def scorejoueur(self):  #prend en arguments score et liste
         Name=input('Nom du joueur:')
-        self._liste_score.append((self._score,Name))
-        self._liste_score=sorted(self._liste_score)
+        self._liste_score.append((Name,self._score))
+        self._liste_score=sorted(self._liste_score[1])
         with open('highscore.txt', 'w') as f :
             for k in range(len(self._liste_score)):
                 f.write(f"{self._liste_score[k][0]}, {self._liste_score[k][1]}\n")
         
-    def write_score(self,score,liste_score):
+    def write_score(self):
         if not(os.path.exists('highscore.txt')):
             with open('highscore.txt','w') as f:
                 Score().scorejoueur()
@@ -189,14 +192,14 @@ class Score:
                     if line=='\n':
                         del line
                     else:
-                        s,nom=int(line.split(',')[0]), line.split(',')[1]
-                        self._liste_score.append((s,nom))
+                        nom,s=int(line.split(',')[0]), line.split(',')[1]
+                        self._liste_score.append((nom,s))
                 if len(self._liste_score)<5:
             
                     Score().scorejoueur()
                 else:
                     self._liste_score=sorted(self._liste_score)
-                    if self._score>self._liste_score[0][0]:
+                    if self._score > self._liste_score[0][1]:
                         self._liste_score.pop(0)
                             
                         Score().scorejoueur()
@@ -212,20 +215,21 @@ while game.test():
     clock.tick(5) # regarde le temps entre 2 boucles et attend 1s sinon bloque
   
     damier.affiche_damier() 
+    score.displayScore()
     #pg.display.update()
     game.moves()
     snake.NewDirection(game.Getdirection())
     snake.avance_snake()  #on fait avancer le snake en rajoutant un rectangle a sa liste et enlevant le dernier
     damier.affiche_fruit(fruit.getposition())
-    snake.manger_fruit()  #si la tete ne rencontre pas le fruit
+    snake.manger_fruit(fruit,damier,score)  #si la tete ne rencontre pas le fruit
                 #on supprime la derniere case ie le snake ne grandit pas
     
     
     damier.affiche_snake(snake.getliste_snake())
     pg.display.update()
-    snake.mort_snake()
+    snake.mort_snake(game)
     
 pg.quit()
-
+score.write_score()
 
 system("cat highscore.txt")
