@@ -3,6 +3,7 @@ import numpy as np
 import pygame as pg
 import argparse
 import os 
+from pathlib import Path
 from os import system
 
 parser = argparse.ArgumentParser(description='Process some integers.')
@@ -24,160 +25,207 @@ if (args.height % args.dimpixel !=0) or (args.width % args.dimpixel !=0) :
 else:
     pass
 
-score=0
+
 pg.init()
 screen=pg.display.set_mode((args.width,args.height)) #on definit un ecran
 
 clock=pg.time.Clock() #on definit une horloge
-running=True  #condition pour que la boucle tourne
+  #condition pour que la boucle tourne
+
+class Game:
+    def __init__(self):
+        self._running=True
+        self._direction =(1,0)
+    
+    def test(self):
+        return self._running
+    def Getdirection(self):
+        return self._direction
 
 
-class damier:
+    def moves(self):
+        for event in pg.event.get():  #renvoie none si pas event
+            if event.type == pg.QUIT:
+                self._running=False
+        # un type de pg.KEYDOWN signifie que l'on a appuye une touche du clavier
+            elif event.type == pg.KEYDOWN:
+            # si la touche est "Q" on veut quitter le programme
+                if event.key == pg.K_q:
+                    self._running=False
+                if event.key == pg.K_UP:
+                    self._direction = (0,-1)
+                if event.key == pg.K_DOWN:
+                    self._direction=(0,1)
+                if event.key == pg.K_LEFT:
+                    self._direction=(-1,0)
+                if event.key == pg.K_RIGHT:
+                    self._direction=(1,0)
 
-    def __init__(self, height, width, pixel):
-        self.height = height
-        self.width = width
-        self.pixel = pixel
+
+
+class Damier:
+
+    def __init__(self, height=args.height, width=args.width, pixel=args.dimpixel):
+        self._height = height
+        self._width = width
+        self._pixel = pixel
+    
+    def getheight(self):
+        return self._height
+    
+    def getpixel(self):
+        return self._pixel
+    
+    def getwidth(self):
+        return self._width
 
     def affiche_damier(self):
-        for i in range(self.height//self.pixel):
-            for j in range(self.width//self.pixel):
+        for i in range(self._height//self._pixel):
+            for j in range(self._width//self._pixel):
                 if (i+j)%2 !=0:
-                    rect = pg.Rect(i*self.pixel, j*self.pixel, self.pixel, self.pixel)
+                    rect = pg.Rect(i*self._pixel, j*self._pixel, self._pixel, self._pixel)
 
                 # appel à la méthode draw.rect()
                     color = [0, 0, 0] # couleur noire
                     pg.draw.rect(screen, color, rect)
                 else:
-                    rect = pg.Rect(i*self.pixel, j*self.pixel, self.pixel, self.pixel)
+                    rect = pg.Rect(i*self._pixel, j*self._pixel, self._pixel, self._pixel)
 
                 # appel à la méthode draw.rect()
                     color = [255, 255, 255] # blanc
                     pg.draw.rect(screen,color,rect)
-class snake:
-    def __init__(self, liste_snake, directi):
-        self.liste_snake = liste_snake
-        self.direction = directi
-        
-    def affiche_snake(self):   #code de l'affichage du serpent
+    
+    def affiche_snake(self, list_snake):   #code de l'affichage du serpent
         #lis_snake = self.liste_snake
-        for rectangle in self.liste_snake:  #liste_snake = liste des tuples de positionnement des rectangles vert
-            rectang=pg.Rect(rectangle[0]*damier.pixel,rectangle[1]*damier.pixel,damier.pixel,damier.pixel)
+        for rectangle in list_snake:  #liste_snake = liste des tuples de positionnement des rectangles vert
+            rectang=pg.Rect(rectangle[0]*self._pixel,rectangle[1]*self._pixel,self._pixel,self._pixel)
             pg.draw.rect(screen,(0,254,0),rectang)
+    
+    def position_fruit(self):
+        a=np.random.randint(0,self._height//self._pixel)    #sinon on genere nouveau fruit
+        b=np.random.randint(0,self._width//self._pixel)
+        return (a,b)
+    
+    def affiche_fruit(self, pos_fruit):   #code de l'affichage du fruit
+        rec=pg.Rect(pos_fruit[0]*self._pixel,pos_fruit[1]*self._pixel,self._pixel,self._pixel)
+        pg.draw.rect(screen,(254,0,0),rec)
+
+
+class Snake:
+    def __init__(self, liste_snake=[(9, 13),(10, 13),(11, 13),(12,13)], direction=(1,0)):
+        self._liste_snake = liste_snake
+        self._direction = direction
+
+    def getliste_snake(self):
+        return self._liste_snake
+    
+    def getdirection(self):
+        return self._direction
+    
+    def NewDirection(self,d):
+        self._direction=d
         
     def avance_snake(self):
-        self.liste_snake.append((self.liste_snake[-1][0]+self.direction[0],self.liste_snake[-1][1]+self.direction[1])) #on fait avancer le snake en rajoutant un rectangle a sa liste et enlevant le dernier
-        return self.liste_snake
-       
+        self._liste_snake.append((self._liste_snake[-1][0]+self._direction[0],self._liste_snake[-1][1]+self._direction[1])) #on fait avancer le snake en rajoutant un rectangle a sa liste et enlevant le dernier
+        return self._liste_snake
+
     def manger_fruit(self):    
-        if self.liste_snake[-1]!=fruit.position:  #si la tete ne rencontre pas le fruit
-            del self.liste_snake[0] 
+        if self._liste_snake[-1]!=Fruit().getposition():  #si la tete ne rencontre pas le fruit
+            del self._liste_snake[0] 
         else:
-            fruit.position=fruit(fruit.position).position_fruit()
-            score=score+1
+            Fruit()._position=Damier().position_fruit()
+            Score().raise_score()
 
             #on met ensuit fruit.affiche_fruit()?
 
     def mort_snake(self):   
-        if self.liste_snake[-1] in self.liste_snake[:-1]:     #si la tete du snake touche son corps on perd
-            running=False
+        if self._liste_snake[-1] in self._liste_snake[:-1]:     #si la tete du snake touche son corps on perd
+            
             print('game over')
-        elif self.liste_snake[-1][0]<0 or self.liste_snake[-1][0]>= (damier.width//damier.pixel):
-            running=False
+            Game()._running= False
+        elif self._liste_snake[-1][0]<0 or self._liste_snake[-1][0]>= (damier.getwidth()//damier.getpixel()):
+            
             print('game over')
-        elif self.liste_snake[-1][1]<0 or self.liste_snake[-1][1]>= (damier.height//damier.pixel):
-            running=False
+            Game()._running= False
+        elif self._liste_snake[-1][1]<0 or self._liste_snake[-1][1]>= (damier.getheight()//damier.getpixel()):
+            
             print('game over')
+            Game()._running= False
 
-class fruit:
-    def __init__(self, position): #position est un couple
-        self.position = position
+class Fruit:
+    def __init__(self, position=Damier().position_fruit()): #position est un couple
+        self._position = position
+    
+    def getposition(self):
+        return self._position
+
+class Score:
+    def __init__(self,score=0,liste_score=[]):
+        self._score=score
+        self._liste_score=liste_score
+
+    def GetScore(self):
+        return self._score
+
+    def raise_score(self):
+        self._score+=1
         
-    def position_fruit():
-        a=np.random.randint(0,damier.height//damier.pixel)    #sinon on genere nouveau fruit
-        b=np.random.randint(0,damier.height//damier.pixel)
-        return (a,b)
+    def scorejoueur(self):  #prend en arguments score et liste
+        Name=input('Nom du joueur:')
+        self._liste_score.append((self._score,Name))
+        self._liste_score=sorted(self._liste_score)
+        with open('highscore.txt', 'w') as f :
+            for k in range(len(self._liste_score)):
+                f.write(f"{self._liste_score[k][0]}, {self._liste_score[k][1]}\n")
+        
+    def write_score(self,score,liste_score):
+        if not(os.path.exists('highscore.txt')):
+            with open('highscore.txt','w') as f:
+                Score().scorejoueur()
+        else:
+            with open('highscore.txt','r') as f:
+        
+                for line in f:
+                    if line=='\n':
+                        del line
+                    else:
+                        s,nom=int(line.split(',')[0]), line.split(',')[1]
+                        self._liste_score.append((s,nom))
+                if len(self._liste_score)<5:
+            
+                    Score().scorejoueur()
+                else:
+                    self._liste_score=sorted(self._liste_score)
+                    if self._score>self._liste_score[0][0]:
+                        self._liste_score.pop(0)
+                            
+                        Score().scorejoueur()
 
-    def affiche_fruit(self):   #code de l'affichage du fruit
-        rec=pg.Rect(self.position[0]*damier.pixel,self.position[1]*damier.pixel,damier.pixel,damier.pixel)
-        pg.draw.rect(screen,(254,0,0),rec)
+snake=Snake()
+fruit=Fruit()
+game=Game()
+score=Score()
+damier=Damier()
 
-def scorejoueur(sc,l):  #prend en arguments score et liste
-    Name=input('Nom du joueur:')
-    l.append((sc,Name))
-    l=sorted(l)
-    for k in range(len(l)):
-        f.write(f"{l[k][0]}, {l[k][1]}\n")
-
-liste_snake_init= [(9, 13),
-    (10, 13),
-    (11, 13),
-    (12,13)
-]
-direction=(0,1)
-
-fruit.position=fruit.position_fruit()
-while running:
+while game.test():
 
     clock.tick(5) # regarde le temps entre 2 boucles et attend 1s sinon bloque
-    for event in pg.event.get():  #renvoie none si pas event
-            if event.type == pg.QUIT:
-                running=False
-        # un type de pg.KEYDOWN signifie que l'on a appuye une touche du clavier
-            elif event.type == pg.KEYDOWN:
-            # si la touche est "Q" on veut quitter le programme
-                if event.key == pg.K_q:
-                    running=False
-                if event.key == pg.K_UP:
-                    direction = (0,-1)
-                if event.key == pg.K_DOWN:
-                    direction=(0,1)
-                if event.key == pg.K_LEFT:
-                    direction=(-1,0)
-                if event.key == pg.K_RIGHT:
-                    direction=(1,0)
-
-   # random_color=(randint(0,255),randint(0,255),randint(0,255))
-    #screen.fill((255,255,255))
   
-    damier(args.width,args.height,args.dimpixel).affiche_damier() 
+    damier.affiche_damier() 
     #pg.display.update()
-    L=snake(liste_snake_init,direction).avance_snake()  #on fait avancer le snake en rajoutant un rectangle a sa liste et enlevant le dernier
-    fruit(fruit.position_fruit).affiche_fruit()
-    snake(liste_snake_init,direction).manger_fruit()  #si la tete ne rencontre pas le fruit
+    game.moves()
+    snake.NewDirection(game.Getdirection())
+    snake.avance_snake()  #on fait avancer le snake en rajoutant un rectangle a sa liste et enlevant le dernier
+    damier.affiche_fruit(fruit.getposition())
+    snake.manger_fruit()  #si la tete ne rencontre pas le fruit
                 #on supprime la derniere case ie le snake ne grandit pas
     
     
-    #font = pg.font.Font(None, 20)
-    #text = font.render(str(score),0, (255,255,255))
-    #screen.blit(text, (20,20))
-    
-    snake(L,direction).affiche_snake()
+    damier.affiche_snake(snake.getliste_snake())
     pg.display.update()
-    snake(L,direction).mort_snake()
+    snake.mort_snake()
     
 pg.quit()
-l=[]
-if not(os.path.exists('highscore.txt')):
-    with open('highscore.txt','w') as f:
-        scorejoueur(score,l)
-else:
-    with open('highscore.txt','r') as f:
-        
-        for line in f:
-            if line=='\n':
-                del line
-            else:
-                s,nom=int(line.split(',')[0]), line.split(',')[1]
-                l.append((s,nom))
-        if len(l)<5:
-            
-            with open('highscore.txt','w') as f:
-                scorejoueur(score,l)
-        else:
-            l=sorted(l)
-            if score>l[0][0]:
-                l.pop(0)
-                with open('highscore.txt','w') as f:    
-                    scorejoueur(score,l)
+
+
 system("cat highscore.txt")
