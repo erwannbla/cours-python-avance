@@ -5,6 +5,7 @@ import argparse
 import os 
 from pathlib import Path
 from os import system
+import re
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 #parser.add_argument('integers', metavar='N', type=int, nargs='+',
@@ -15,9 +16,17 @@ parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--height', type=int, help='height', default=400) #le joueur definit largeur et longueur de sa fenetre de jeu +pixel
 parser.add_argument('--width', type=int, help='width', default=400)
 parser.add_argument('--dimpixel', type=int, help='dimp', default=20)
+parser.add_argument('--fruitcolor', type=str, help='fruitcolot', default='#FF0000')
 
 args = parser.parse_args()
+
 print(args) #affiche dans le bash les arguments
+re1= r"^#[a-f0-9A-F]{6}$"
+if not(re.search(re1,args.fruitcolor)):
+    print('couleur fruit pas compatible hexadecimal')
+    exit()
+else:
+    pass
 
 if (args.height % args.dimpixel !=0) or (args.width % args.dimpixel !=0) :
     print('erreur:largeur pixel nest pas un diviseur de la largeur de la fenetre')
@@ -65,10 +74,12 @@ class Game:
 
 class Damier:
 
-    def __init__(self, height=args.height, width=args.width, pixel=args.dimpixel):
+    def __init__(self, height=args.height, width=args.width, 
+    pixel=args.dimpixel, color_fruit=args.fruitcolor):
         self._height = height
         self._width = width
         self._pixel = pixel
+        self._color_fruit=color_fruit
     
     def getheight(self):
         return self._height
@@ -99,7 +110,7 @@ class Damier:
         #lis_snake = self.liste_snake
         for rectangle in list_snake:  #liste_snake = liste des tuples de positionnement des rectangles vert
             rectang=pg.Rect(rectangle[0]*self._pixel,rectangle[1]*self._pixel,self._pixel,self._pixel)
-            pg.draw.rect(screen,(0,254,0),rectang)
+            pg.draw.rect(screen,[0,254,0],rectang)
     
     def position_fruit(self):
         a=np.random.randint(0,self._height//self._pixel)    #sinon on genere nouveau fruit
@@ -108,7 +119,7 @@ class Damier:
     
     def affiche_fruit(self, pos_fruit):   #code de l'affichage du fruit
         rec=pg.Rect(pos_fruit[0]*self._pixel,pos_fruit[1]*self._pixel,self._pixel,self._pixel)
-        pg.draw.rect(screen,(254,0,0),rec)
+        pg.draw.rect(screen,self._color_fruit,rec)
 
 
 class Snake:            #class avec majuscule, fonction avec minuscule
@@ -138,13 +149,13 @@ class Snake:            #class avec majuscule, fonction avec minuscule
             fru._position=object.position_fruit()
             sco._score+=1
 
-    def mort_snake(self,object):   
-        if self._liste_snake[-1] in self._liste_snake[:-1]:     #si la tete du snake touche son corps on perd
-            
+    def mort_snake(self,object):   #on donnera object=game
+        if self._liste_snake[-1] in self._liste_snake[:-1]:     
+            #si la tete du snake touche son corps on perd
             print('game over')
             object._running= False
         elif self._liste_snake[-1][0]<0 or self._liste_snake[-1][0]>= (damier.getwidth()//damier.getpixel()):
-            
+            #dies if touches the walls
             print('game over')
             object._running= False
         elif self._liste_snake[-1][1]<0 or self._liste_snake[-1][1]>= (damier.getheight()//damier.getpixel()):
@@ -153,7 +164,7 @@ class Snake:            #class avec majuscule, fonction avec minuscule
             object._running= False
 
 class Fruit:
-    def __init__(self, position=Damier().position_fruit()): #position est un couple
+    def __init__(self, position=Damier().position_fruit()): #position est un couple aleatoire
         self._position = position
     
     def getposition(self):
@@ -169,22 +180,27 @@ class Score:
     
     def displayScore(self):
         pg.display.set_caption(f"Score:{self._score}")
-
-   # def raise_score(self):
-   #     self._score=self._score + 1
         
-    def scorejoueur(self):  #prend en arguments score et liste
+    def scorejoueur(self,scor,list): 
+        ''' 
+        prend en arguments nouveau score et liste de scores
+        pour ecrire sur le fichier
+        '''
         Name=input('Nom du joueur:')
-        self._liste_score.append((Name,self._score))
-        self._liste_score=sorted(self._liste_score[1])
-        with open('highscore.txt', 'w') as f :
-            for k in range(len(self._liste_score)):
-                f.write(f"{self._liste_score[k][0]}, {self._liste_score[k][1]}\n")
+        list.append((scor,Name))
         
-    def write_score(self):
+        with open('highscore.txt', 'w') as f :
+            for k in range(len(list)):
+                f.write(f"{list[k][0]}, {list[k][1]}\n")
+        
+    def write_score(self,obj):
+        '''
+        check if highscore.txt exist and keeps top 5 score
+        '''
         if not(os.path.exists('highscore.txt')):
+            Name=input('Nom du joueur:')
             with open('highscore.txt','w') as f:
-                Score().scorejoueur()
+                f.write(f"{obj.GetScore()}, {Name}\n")
         else:
             with open('highscore.txt','r') as f:
         
@@ -192,17 +208,22 @@ class Score:
                     if line=='\n':
                         del line
                     else:
-                        nom,s=int(line.split(',')[0]), line.split(',')[1]
-                        self._liste_score.append((nom,s))
+                        s,nom=int(line.split(',')[0]), line.split(',')[1]
+                        self._liste_score.append((s,nom))
+                print(self._liste_score)
                 if len(self._liste_score)<5:
-            
-                    Score().scorejoueur()
+                    
+                    Score().scorejoueur(obj.GetScore(),self._liste_score)
                 else:
-                    self._liste_score=sorted(self._liste_score)
-                    if self._score > self._liste_score[0][1]:
-                        self._liste_score.pop(0)
-                            
-                        Score().scorejoueur()
+                    
+                    l=self._liste_score
+                    l=sorted(l)
+                    if self._score > l[0][0]:
+                        l.pop(0)
+                        print('New top 5')
+                        Score().scorejoueur(obj.GetScore(),l)
+                    else:
+                        print('Not new top 5')
 
 snake=Snake()
 fruit=Fruit()
@@ -230,6 +251,11 @@ while game.test():
     snake.mort_snake(game)
     
 pg.quit()
-score.write_score()
+score.write_score(score)
 
 system("cat highscore.txt")
+
+if __name__=='__main__':
+    print('launched from the original file')
+else:
+    print('lauched with another file')
